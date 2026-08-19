@@ -48,18 +48,7 @@ const registerUser = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    if (error.code === 11000) {
-      return res.status(400).json({ message: 'User already exists with this email' });
-    }
-    if (error.name === 'ValidationError') {
-      const msg = Object.values(error.errors)
-        .map((e) => e.message)
-        .join(', ');
-      return res.status(400).json({ message: msg });
-    }
-    res.status(500).json({
-      message: error.message || 'Server error. Is MongoDB running?',
-    });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
