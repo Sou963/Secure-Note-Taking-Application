@@ -1,65 +1,109 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const path = require('path');
-const connectDB = require('./config/db');
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const path = require("path");
 
+const connectDB = require("./config/db");
+
+// Load environment variables
 dotenv.config();
 
 const app = express();
 
+// --------------------------------------------------
+// Middleware
+// --------------------------------------------------
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || true,
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
     credentials: true,
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// API routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/notes', require('./routes/notes'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/posts', require('./routes/posts'));
+// --------------------------------------------------
+// API Routes
+// --------------------------------------------------
+
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/notes", require("./routes/notes"));
+app.use("/api/users", require("./routes/users"));
+app.use("/api/posts", require("./routes/posts"));
+
+// --------------------------------------------------
+// Frontend - Local development only
+// --------------------------------------------------
 
 if (!process.env.VERCEL) {
-  // Serve frontend locally
-  app.use(express.static(path.join(__dirname, '../frontend')));
+  const frontendPath = path.join(__dirname, "../frontend");
 
-  app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+  app.use(express.static(frontendPath));
+
+  app.get("/", (req, res) => {
+    res.sendFile(path.join(frontendPath, "index.html"));
   });
 }
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Secure Note App API running' });
+// --------------------------------------------------
+// Health Check
+// --------------------------------------------------
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    message: "Secure Note App API running",
+  });
 });
 
-// 404 handler
+// --------------------------------------------------
+// 404 Handler
+// --------------------------------------------------
+
 app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
 });
 
-// Error handler
+// --------------------------------------------------
+// Global Error Handler
+// --------------------------------------------------
+
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: err.message || 'Server Error' });
+  console.error(err);
+
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Server Error",
+  });
 });
 
-if (process.env.MONGO_URI) {
-  connectDB().catch((error) => {
-    console.error('MongoDB connection failed:', error.message);
-  });
-}
+// --------------------------------------------------
+// MongoDB Connection
+// --------------------------------------------------
 
-if (require.main === module) {
-  const PORT = process.env.PORT || 5000;
+connectDB().catch((error) => {
+  console.error("MongoDB connection failed:", error.message);
+});
 
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
+// --------------------------------------------------
+// Local Server
+// --------------------------------------------------
+
+// if (require.main === module) {
+//   const PORT = process.env.PORT || 5000;
+
+//   app.listen(PORT, () => {
+//     console.log(`Server running on http://localhost:${PORT}`);
+//   });
+// }
+
+// --------------------------------------------------
+// Export for Vercel
+// --------------------------------------------------
 
 module.exports = app;
