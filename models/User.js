@@ -40,10 +40,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Index for email lookups (login / uniqueness checks)
-// unique: true already creates an index, but we explicitly declare for visibility
-userSchema.index({ email: 1 }, { unique: true });
-
 // Index for role-based list queries (admin listing users by role, pagination)
 userSchema.index({ role: 1, createdAt: -1 });
 
